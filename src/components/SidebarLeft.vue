@@ -4,10 +4,13 @@ import { ref, reactive, onMounted } from 'vue';
 // Ruta del archivo de sonido
 const poopSoundSrc = new URL('../assets/caca.mp3', import.meta.url).href;
 
+// Configuración de CPS
+const MAX_CPS_FOR_BOUNCE = 5; // Umbral de CPS para rebote continuo
+
 // Variables de estado
 const state = reactive({
   poopCollected: 0,
-  backgroundPoops: [] as { id: number; x: number; angle: number }[],
+  backgroundPoops: [] as { id: number; x: number; y: number; angle: number }[],
   clickCounters: [] as { id: number; x: number; y: number }[],
   clicks: 0,
   cps: 0,
@@ -17,7 +20,10 @@ const state = reactive({
 let poopId = 0;
 let counterId = 0;
 
-// Funciones auxiliares
+// Estados de animación del perro
+const isBouncing = ref(false);
+const isContinuousBounce = ref(false);
+
 const generateRandomPosition = () => {
   const x = Math.random() * (window.innerWidth - 50); // Posición horizontal ajustada
   const y = Math.random() * -100; // Comienza fuera de la pantalla (por encima)
@@ -52,10 +58,21 @@ const handleCollectPoop = (event: MouseEvent) => {
   const newCounter = { id: counterId++, x, y };
   state.clickCounters.push(newCounter);
 
-  // Eliminar contador después de 1 segundo
+  // Eliminar contador después de 0.6 segundos
   setTimeout(() => {
     state.clickCounters = state.clickCounters.filter(counter => counter.id !== newCounter.id);
-  }, 1000);
+  }, 600);
+
+  // Animar el rebote del perro
+  if (state.cps <= MAX_CPS_FOR_BOUNCE) {
+    isContinuousBounce.value = false;
+    isBouncing.value = true;
+    setTimeout(() => {
+      isBouncing.value = false;
+    }, 300); // Rebote individual dura 300ms
+  } else {
+    isContinuousBounce.value = true; // Habilitar rebote continuo si CPS es alto
+  }
 };
 
 // Calcular clicks por segundo (CPS)
@@ -63,6 +80,11 @@ onMounted(() => {
   setInterval(() => {
     state.cps = state.clicks;
     state.clicks = 0;
+
+    // Si CPS cae por debajo del umbral, deshabilitar rebote continuo
+    if (state.cps <= MAX_CPS_FOR_BOUNCE) {
+      isContinuousBounce.value = false;
+    }
   }, 1000);
 
   // Generar lluvia intensa de popós en el fondo continuamente
@@ -73,7 +95,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="relative h-screen w-full bg-gradient-to-b from-teal-400 to-blue-200 overflow-hidden select-none">
+  <div class="relative h-screen w-full bg-gradient-to-b from-green-300 to-yellow-200 overflow-hidden select-none">
     <!-- Fondo de Popós -->
     <div class="absolute inset-0 z-0">
       <div
@@ -94,7 +116,7 @@ onMounted(() => {
     <div
       v-for="counter in state.clickCounters"
       :key="counter.id"
-      class="absolute text-2xl font-bold text-yellow-500 opacity-100 animate-bounce z-50"
+      class="absolute text-2xl font-bold text-yellow-500 opacity-100 animate-bounce-short z-50 pointer-events-none"
       :style="{
         left: counter.x + 'px',
         top: counter.y + 'px'
@@ -114,16 +136,6 @@ onMounted(() => {
 
       <!-- Imagen del Perro -->
       <div class="flex flex-col items-center justify-center h-screen">
-        <!-- Auras Giratorias -->
-        <div
-          class="absolute w-64 h-64 border-t-4 border-yellow-400 rounded-full animate-spin-clockwise"
-          style="clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);"
-        ></div>
-        <div
-          class="absolute w-48 h-48 border-t-4 border-yellow-600 rounded-full animate-spin-counterclockwise"
-          style="clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);"
-        ></div>
-
         <!-- Perro como Botón -->
         <div
           class="relative w-48 h-48 bg-white rounded-full shadow-xl border-4 border-yellow-500 flex items-center justify-center cursor-pointer transform hover:scale-110 transition-transform duration-300"
@@ -135,6 +147,10 @@ onMounted(() => {
             alt="Perro Corgi"
             class="w-44 h-44 object-contain select-none"
             draggable="false"
+            :class="{
+              'animate-dog-bounce': isBouncing,
+              'animate-dog-continuous-bounce': isContinuousBounce,
+            }"
           />
         </div>
       </div>
@@ -160,8 +176,36 @@ onMounted(() => {
   pointer-events: none; /* Las popós en el fondo no interfieren con clics */
 }
 
-/* Animación de rebote para contadores */
-@keyframes bounce {
+/* Animación de rebote individual */
+@keyframes dog-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-dog-bounce {
+  animation: dog-bounce 0.3s ease-in-out;
+}
+
+/* Animación de rebote continuo */
+@keyframes dog-continuous-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-dog-continuous-bounce {
+  animation: dog-continuous-bounce 0.6s ease-in-out infinite;
+}
+
+/* Animación de rebote para los contadores con duración reducida */
+@keyframes bounce-short {
   0%, 100% {
     transform: translateY(0);
     opacity: 1;
@@ -175,34 +219,8 @@ onMounted(() => {
   }
 }
 
-.animate-bounce {
-  animation: bounce 1s ease-out forwards;
-}
-
-/* Animaciones de las auras */
-@keyframes spin-clockwise {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes spin-counterclockwise {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(-360deg);
-  }
-}
-
-.animate-spin-clockwise {
-  animation: spin-clockwise 8s linear infinite;
-}
-
-.animate-spin-counterclockwise {
-  animation: spin-counterclockwise 12s linear infinite;
+.animate-bounce-short {
+  animation: bounce-short 0.6s ease-out forwards;
+  pointer-events: none;
 }
 </style>
