@@ -128,11 +128,25 @@ onMounted(() => {
     <!-- Contenido Interactivo -->
     <div class="relative z-10">
       <!-- Encabezado -->
-      <div class="absolute top-0 w-full py-4 bg-yellow-400 text-white text-center shadow-lg">
-        <h1 class="text-4xl font-extrabold tracking-wider">🐾 Guardería de Perros Felices 🐾</h1>
-        <p class="text-lg mt-2">Popós Limpias: <span class="font-bold">{{ state.poopCollected }}</span></p>
-        <p class="text-lg mt-2">Clicks por segundo (CPS): <span class="font-bold">{{ state.cps }}</span></p>
-      </div>
+      <div class="absolute top-0 w-full py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-center shadow-lg rounded-b-lg">
+  <!-- Título Principal -->
+  <h1 class="text-2xl font-extrabold tracking-wide uppercase leading-tight px-4 truncate">
+    🐾 Guardería 🐾
+  </h1>
+
+  <!-- Estadísticas -->
+  <div class="flex justify-center space-x-8 mt-2">
+    <div class="text-sm">
+      <p class="font-semibold">Popós Limpias</p>
+      <p class="text-xl font-bold">{{ state.poopCollected }}</p>
+    </div>
+    <div class="text-sm">
+      <p class="font-semibold">Clicks por Segundo</p>
+      <p class="text-xl font-bold">{{ state.cps }}</p>
+    </div>
+  </div>
+</div>
+
 
       <!-- Imagen del Perro -->
       <div class="flex flex-col items-center justify-center h-screen">

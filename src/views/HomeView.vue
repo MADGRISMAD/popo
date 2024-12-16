@@ -4,7 +4,7 @@
     :style="{ backgroundImage: `url(${parkImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }"
   >
     <h1 class="text-2xl font-bold text-center text-white mb-6 absolute top-4 w-full z-10">
-      Vista del Parque (Isométrica)
+      Vista del Parque
     </h1>
 
     <!-- Perritos -->
@@ -12,11 +12,11 @@
       v-for="dog in parkState.dogs"
       :key="dog.id"
       class="absolute w-16 h-16 transition-all duration-1000 ease-in-out"
-      :class="{ 'animate-shake-rotate': dog.isFighting }"
+      :class="{ 'animate-shake': dog.isFighting, 'animate-cry': dog.isCrying }"
       :style="{ 
         left: dog.x + 'px', 
         top: dog.y + 'px', 
-        transform: `translateZ(0) rotateX(30deg) rotateY(-45deg) ${dog.direction === 'left' ? 'scaleX(-1)' : ''}` 
+        transform: dog.direction === 'left' ? 'scaleX(-1)' : '' 
       }"
     >
       <!-- Sombra del perro -->
@@ -26,14 +26,15 @@
 
       <!-- Imagen del perro -->
       <img
-        src="../assets/dog.png"
+        src="../assets/corgi2.png"
         alt="Perro paseando"
-        class="w-full h-full object-contain shadow-xl rounded-lg"
+        class="w-full h-full object-contain rounded-lg"
       />
-      <!-- Emoji sobre los perros -->
+
+      <!-- Emoji sobre el perro -->
       <div
         v-if="dog.isFighting || dog.isCrying"
-        class="absolute top-[-30px] left-[50%] transform -translate-x-[50%] bg-white text-2xl rounded-full shadow-lg px-2"
+        class="absolute top-[-30px] left-1/2 transform -translate-x-1/2 bg-white text-2xl font-bold rounded-full shadow-lg px-2 py-1 z-20"
       >
         {{ dog.isFighting ? "😡" : "😭" }}
       </div>
@@ -43,11 +44,10 @@
     <div
       v-for="poop in parkState.poop"
       :key="poop.id"
-      class="absolute text-4xl cursor-pointer"
+      class="absolute text-4xl cursor-pointer animate-pop-in"
       :style="{ 
         left: poop.x + 'px', 
-        top: poop.y + 'px', 
-        transform: 'translateZ(0) rotateX(30deg) rotateY(-45deg)' 
+        top: poop.y + 'px' 
       }"
       @click="collectPoop(poop.id)"
     >
@@ -58,13 +58,12 @@
     <div
       v-for="fight in parkState.fights"
       :key="fight.id"
-      class="absolute"
+      class="absolute animate-fight-in"
       :style="{ 
         left: (fight.x - fight.width / 2 - 20) + 'px', 
         top: (fight.y - fight.height / 2 - 20) + 'px', 
         width: (fight.width * 2) + 'px', 
-        height: (fight.height * 2) + 'px', 
-        transform: 'translateZ(0) rotateX(30deg) rotateY(-45deg)' 
+        height: (fight.height * 2) + 'px'
       }"
     >
       <img
@@ -85,7 +84,7 @@
 import { reactive, onMounted } from 'vue';
 
 // Ruta de la imagen de fondo
-const parkImage = new URL('../assets/park', import.meta.url).href;
+const parkImage = new URL('../assets/park.png', import.meta.url).href;
 
 // Variables de estado para el parque
 const parkState = reactive({
@@ -119,6 +118,12 @@ const generateRandomPosition = (width: number, height: number) => {
 const addDog = (width: number, height: number) => {
   const { x, y } = generateRandomPosition(width, height);
   parkState.dogs.push({ id: dogId++, x, y, direction: 'right', isFighting: false, isCrying: false });
+};
+
+// Recoger popó
+const collectPoop = (poopId: number) => {
+  parkState.poop = parkState.poop.filter(poop => poop.id !== poopId);
+  parkState.poopCollected++;
 };
 
 // Añadir popó al parque
@@ -167,6 +172,14 @@ const detectFights = () => {
         setTimeout(() => {
           dog1.isFighting = false;
           dog2.isFighting = false;
+          dog1.isCrying = true;
+          dog2.isCrying = true;
+
+          // Los perros dejan de llorar tras 3 segundos
+          setTimeout(() => {
+            dog1.isCrying = false;
+            dog2.isCrying = false;
+          }, 3000);
         }, 5000);
 
         // Remover la pelea después de 5 segundos
@@ -217,20 +230,60 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Animación de sacudida con rotación */
-@keyframes shake-rotate {
+/* Animaciones */
+@keyframes shake {
   0%, 100% {
-    transform: translate(0, 0) rotate(0);
+    transform: translate(0, 0);
   }
-  25% {
-    transform: translate(-5px, 0) rotate(-5deg);
-  }
-  75% {
-    transform: translate(5px, 0) rotate(5deg);
+  50% {
+    transform: translate(2px, 2px);
   }
 }
 
-.animate-shake-rotate {
-  animation: shake-rotate 0.3s infinite;
+@keyframes pop-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fight-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cry {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.5s infinite;
+}
+
+.animate-cry {
+  animation: cry 1s infinite;
+}
+
+.animate-pop-in {
+  animation: pop-in 0.3s ease-out;
+}
+
+.animate-fight-in {
+  animation: fight-in 0.5s ease-out;
 }
 </style>
