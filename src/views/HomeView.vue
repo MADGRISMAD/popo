@@ -1,12 +1,11 @@
 <template>
-  <div class="relative bg-green-200 h-full rounded-lg shadow-lg overflow-hidden">
-    <h1 class="text-2xl font-bold text-center mb-6">Vista del Parque</h1>
-
-    <!-- Valla -->
-    <div class="absolute inset-0 border-t-8 border-l-8 border-r-8 border-white border-dashed"></div>
-
-    <!-- Pasto -->
-    <div class="absolute inset-0 bg-gradient-to-b from-green-300 to-green-500"></div>
+  <div
+    class="relative bg-green-200 h-full w-full overflow-hidden"
+    :style="{ backgroundImage: `url(${parkImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }"
+  >
+    <h1 class="text-2xl font-bold text-center text-white mb-6 absolute top-4 w-full z-10">
+      Vista del Parque (Isométrica)
+    </h1>
 
     <!-- Perritos -->
     <div
@@ -17,13 +16,19 @@
       :style="{ 
         left: dog.x + 'px', 
         top: dog.y + 'px', 
-        transform: dog.direction === 'left' ? 'scaleX(-1)' : 'scaleX(1)' 
+        transform: `translateZ(0) rotateX(30deg) rotateY(-45deg) ${dog.direction === 'left' ? 'scaleX(-1)' : ''}` 
       }"
     >
+      <!-- Sombra del perro -->
+      <div
+        class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-12 h-4 bg-black opacity-30 rounded-full"
+      ></div>
+
+      <!-- Imagen del perro -->
       <img
         src="../assets/dog.png"
         alt="Perro paseando"
-        class="w-full h-full object-contain"
+        class="w-full h-full object-contain shadow-xl rounded-lg"
       />
       <!-- Emoji sobre los perros -->
       <div
@@ -39,7 +44,11 @@
       v-for="poop in parkState.poop"
       :key="poop.id"
       class="absolute text-4xl cursor-pointer"
-      :style="{ left: poop.x + 'px', top: poop.y + 'px' }"
+      :style="{ 
+        left: poop.x + 'px', 
+        top: poop.y + 'px', 
+        transform: 'translateZ(0) rotateX(30deg) rotateY(-45deg)' 
+      }"
       @click="collectPoop(poop.id)"
     >
       💩
@@ -54,7 +63,8 @@
         left: (fight.x - fight.width / 2 - 20) + 'px', 
         top: (fight.y - fight.height / 2 - 20) + 'px', 
         width: (fight.width * 2) + 'px', 
-        height: (fight.height * 2) + 'px' 
+        height: (fight.height * 2) + 'px', 
+        transform: 'translateZ(0) rotateX(30deg) rotateY(-45deg)' 
       }"
     >
       <img
@@ -73,6 +83,9 @@
 
 <script setup lang="ts">
 import { reactive, onMounted } from 'vue';
+
+// Ruta de la imagen de fondo
+const parkImage = new URL('../assets/park', import.meta.url).href;
 
 // Variables de estado para el parque
 const parkState = reactive({
